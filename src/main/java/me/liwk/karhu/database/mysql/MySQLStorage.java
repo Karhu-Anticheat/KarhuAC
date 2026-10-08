@@ -17,6 +17,7 @@ import java.sql.ResultSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class MySQLStorage implements Storage {
     private ConcurrentLinkedQueue<ViolationX> violations = new ConcurrentLinkedQueue<>();
@@ -26,36 +27,49 @@ public class MySQLStorage implements Storage {
     @Override
     public void init() {
         MySQL.init();
-        Query.prepare("CREATE TABLE IF NOT EXISTS `ALERTS` (" +
-                "`UUID` TEXT NOT NULL," +
-                "`MODULE` TEXT NOT NULL," +
-                "`VL` SMALLINT NOT NULL," +
-                "`TIME` LONG NOT NULL," +
-                "`EXTRA` TEXT," +
-                "`COORDS` TEXT," +
-                "`WORLD` TEXT," +
-                "`PING` LONG NOT NULL," +
-                "`TPS` DOUBLE NOT NULL)").execute();
-        Query.prepare("CREATE TABLE IF NOT EXISTS `ALERTSTATUS` (" +
-                "`UUID` VARCHAR(36) NOT NULL," +
-                "`STATUS` TINYINT(1) NOT NULL," +
-                "PRIMARY KEY (UUID))")
-                .execute();
-        Query.prepare("CREATE TABLE IF NOT EXISTS `BANS` (" +
-                "`UUID` TEXT NOT NULL," +
-                "`MODULE` TEXT NOT NULL," +
-                "`TIME` LONG NOT NULL," +
-                "`EXTRA` TEXT," +
-                "`PING` LONG NOT NULL," +
-                "`TPS` DOUBLE NOT NULL)").execute();
-        Query.prepare("CREATE TABLE IF NOT EXISTS `BANWAVE` (" +
-                "`UUID` TEXT NOT NULL," +
-                "`MODULE` TEXT NOT NULL," +
-                "`TIME` LONG NOT NULL," +
-                "`TOTALLOGS` SMALLINT NOT NULL)")
-                .execute();
-        Query.prepare("ALTER TABLE ALERTS ADD COLUMN IF NOT EXISTS COORDS TEXT").execute();
-        Query.prepare("ALTER TABLE ALERTS ADD COLUMN IF NOT EXISTS WORLD TEXT").execute();
+        try {
+            // LONG is an alias of MEDIUMTEXT in MySQL/MariaDB, numeric columns must be BIGINT
+            Query.prepare("CREATE TABLE IF NOT EXISTS `ALERTS` (" +
+                    "`UUID` TEXT NOT NULL," +
+                    "`MODULE` TEXT NOT NULL," +
+                    "`VL` SMALLINT NOT NULL," +
+                    "`TIME` BIGINT NOT NULL," +
+                    "`EXTRA` TEXT," +
+                    "`COORDS` TEXT," +
+                    "`WORLD` TEXT," +
+                    "`PING` BIGINT NOT NULL," +
+                    "`TPS` DOUBLE NOT NULL)").execute();
+            Query.prepare("CREATE TABLE IF NOT EXISTS `ALERTSTATUS` (" +
+                    "`UUID` VARCHAR(36) NOT NULL," +
+                    "`STATUS` TINYINT(1) NOT NULL," +
+                    "PRIMARY KEY (UUID))")
+                    .execute();
+            Query.prepare("CREATE TABLE IF NOT EXISTS `BANS` (" +
+                    "`UUID` TEXT NOT NULL," +
+                    "`MODULE` TEXT NOT NULL," +
+                    "`TIME` BIGINT NOT NULL," +
+                    "`EXTRA` TEXT," +
+                    "`PING` BIGINT NOT NULL," +
+                    "`TPS` DOUBLE NOT NULL)").execute();
+            Query.prepare("CREATE TABLE IF NOT EXISTS `BANWAVE` (" +
+                    "`UUID` TEXT NOT NULL," +
+                    "`MODULE` TEXT NOT NULL," +
+                    "`TIME` BIGINT NOT NULL," +
+                    "`TOTALLOGS` SMALLINT NOT NULL)")
+                    .execute();
+
+            // Migrate tables created by older versions. ADD COLUMN IF NOT EXISTS only exists on MariaDB.
+            addColumnIfMissing("ALERTS", "COORDS", "TEXT");
+            addColumnIfMissing("ALERTS", "WORLD", "TEXT");
+            migrateToBigint("ALERTS", "TIME");
+            migrateToBigint("ALERTS", "PING");
+            migrateToBigint("BANS", "TIME");
+            migrateToBigint("BANS", "PING");
+            migrateToBigint("BANWAVE", "TIME");
+        } catch (Exception e) {
+            Karhu.getInstance().printCool("&b> &cFailed to create MySQL tables: " + e.getMessage());
+            e.printStackTrace();
+        }
         new Thread(() -> {
             while (Karhu.getInstance() != null && Karhu.getInstance().isEnabled()) {
                 try {
@@ -111,6 +125,34 @@ public class MySQLStorage implements Storage {
             }
         }, "KarhuMySQLCommitter").start();
 
+    }
+
+    private static String getColumnType(String table, String column) {
+        AtomicReference<String> type = new AtomicReference<>();
+        Query.prepare("SELECT `DATA_TYPE` FROM `information_schema`.`COLUMNS` " +
+                        "WHERE `TABLE_SCHEMA` = DATABASE() AND `TABLE_NAME` = ? AND `COLUMN_NAME` = ?")
+                .append(table).append(column).executeSingle(rs -> {
+                    if (rs != null) type.set(rs.getString(1).toLowerCase(Locale.ROOT));
+                });
+        return type.get();
+    }
+
+    private static void addColumnIfMissing(String table, String column, String definition) {
+        if (getColumnType(table, column) == null) {
+            Query.prepare("ALTER TABLE `" + table + "` ADD COLUMN `" + column + "` " + definition).execute();
+        }
+    }
+
+    private static void migrateToBigint(String table, String column) {
+        String type = getColumnType(table, column);
+        if (type == null || type.equals("bigint")) return;
+
+        try {
+            Query.prepare("ALTER TABLE `" + table + "` MODIFY `" + column + "` BIGINT NOT NULL").execute();
+            Karhu.getInstance().printCool("&b> &fMigrated MySQL column " + table + "." + column + " from " + type + " to BIGINT");
+        } catch (Exception e) {
+            Karhu.getInstance().printCool("&b> &cCouldn't migrate MySQL column " + table + "." + column + " to BIGINT: " + e.getMessage());
+        }
     }
 
     @Override
@@ -233,7 +275,8 @@ public class MySQLStorage implements Storage {
     @Override
     public List<BanX> getRecentBans() {
         List<BanX> bans = new ArrayList<>();
-        Query.prepare("SELECT `UUID`, `MODULE`, `TIME`, `EXTRA`, `COORDS`, `PING`, `TPS` FROM `BANS` ORDER BY `TIME`").execute(rs -> {
+        MySQL.use();
+        Query.prepare("SELECT `UUID`, `MODULE`, `TIME`, `EXTRA`, `PING`, `TPS` FROM `BANS` ORDER BY `TIME`").execute(rs -> {
             bans.add(new BanX(rs.getString(1), rs.getString(2), rs.getLong(3),
                     rs.getString(4), rs.getLong(5), rs.getDouble(6)));
         });

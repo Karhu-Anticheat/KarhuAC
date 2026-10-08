@@ -15,6 +15,13 @@ public interface IChunkManager {
 
     Block getChunkBlockAt(Location location);
 
+    /**
+     * @return the cached chunk if it is loaded, null otherwise
+     */
+    Chunk getCachedChunk(World world, int chunkX, int chunkZ);
+
+    Block getBlockInChunk(World world, Chunk chunk, int x, int y, int z);
+
     void onChunkUnload(final Chunk chunk);
 
     void onChunkLoad(final Chunk chunk);

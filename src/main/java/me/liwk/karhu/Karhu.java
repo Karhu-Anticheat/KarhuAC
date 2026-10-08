@@ -74,7 +74,7 @@ public final class Karhu extends JavaPlugin {
     private boolean isViaRewind, isViaVersion, isProtocolSupport, isFloodgate;
 
     @Getter
-    private ExecutorService alertsThread, discordThread, antiVPNThread, packetThread, statsThread;
+    private ExecutorService alertsThread, discordThread, packetThread, statsThread;
 
     @Getter
     public static Storage storage;
@@ -204,9 +204,6 @@ public final class Karhu extends JavaPlugin {
 
         this.discordThread =
                 KarhuThreadManager.createNewExecutor("karhu-discord-thread");
-
-        this.antiVPNThread =
-                KarhuThreadManager.createNewExecutor("karhu-antivpn-thread");
 
         this.statsThread =
                 KarhuThreadManager.createNewExecutor(2, "karhu-stats-thread");

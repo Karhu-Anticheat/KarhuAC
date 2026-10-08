@@ -4,7 +4,6 @@ import me.liwk.karhu.Karhu;
 import me.liwk.karhu.check.api.ViolationX;
 import me.liwk.karhu.command.CommandAPI;
 import me.liwk.karhu.manager.ConfigManager;
-import me.liwk.karhu.manager.alert.AlertsManager;
 import me.liwk.karhu.util.framework.Command;
 import me.liwk.karhu.util.framework.CommandArgs;
 import me.liwk.karhu.util.framework.CommandFramework;
@@ -69,7 +68,7 @@ public class LogsCommand extends CommandAPI {
                                     msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/karhu teleport " + v.location + " " + v.world));
 
                                     if (!Karhu.getInstance().getConfigManager().getConfig().getBoolean("hoverless-alert")
-                                            && (player.hasPermission("karhu.hover-debug") || AlertsManager.ADMINS.contains(player.getUniqueId()))) {
+                                            && (player.hasPermission("karhu.hover-debug"))) {
                                         if(Karhu.getInstance().getConfigManager().getConfig().getBoolean("spigot-api-alert")) {
                                             player.spigot().sendMessage(msg);
                                         } else {
@@ -86,7 +85,7 @@ public class LogsCommand extends CommandAPI {
                                     msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/karhu teleport " + v.location + " " + v.world));
 
                                     if (!Karhu.getInstance().getConfigManager().getConfig().getBoolean("hoverless-alert")
-                                            && (player.hasPermission("karhu.hover-debug") || AlertsManager.ADMINS.contains(player.getUniqueId()))) {
+                                            && (player.hasPermission("karhu.hover-debug"))) {
                                         if (Karhu.getInstance().getConfigManager().getConfig().getBoolean("spigot-api-alert")) {
                                             player.spigot().sendMessage(msg);
                                         } else {

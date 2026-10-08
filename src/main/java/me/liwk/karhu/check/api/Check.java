@@ -10,7 +10,6 @@ import me.liwk.karhu.check.setback.Setbacks;
 import me.liwk.karhu.data.KarhuPlayer;
 import me.liwk.karhu.handler.SimulationHandler;
 import me.liwk.karhu.manager.ConfigManager;
-import me.liwk.karhu.manager.alert.AlertsManager;
 import me.liwk.karhu.manager.alert.MiscellaneousAlertPoster;
 import me.liwk.karhu.util.APICaller;
 import me.liwk.karhu.util.MathUtil;
@@ -373,7 +372,7 @@ public abstract class Check<T> {
                     for (UUID uuid : this.karhu.getAlertsManager().getAlertsToggled()) {
                         Player staff = Bukkit.getPlayer(uuid);
                         if (karhu.getConfigManager().isSpigotApiAlert() && staff != null) {
-                            if(staff.hasPermission("karhu.hover-debug") || AlertsManager.ADMINS.contains(staff.getUniqueId())) {
+                            if(staff.hasPermission("karhu.hover-debug")) {
                                 if (karhu.getConfigManager().isSpigotApiAlert()) {
                                     staff.spigot().sendMessage(hover);
                                 } else {

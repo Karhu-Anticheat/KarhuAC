@@ -2,7 +2,6 @@ package me.liwk.karhu.util.mojang;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import org.spigotmc.SpigotConfig;
 
 import java.net.URL;
 import java.util.Scanner;

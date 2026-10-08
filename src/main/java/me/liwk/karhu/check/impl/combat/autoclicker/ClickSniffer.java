@@ -9,7 +9,6 @@ import me.liwk.karhu.data.KarhuPlayer;
 import me.liwk.karhu.event.Event;
 import me.liwk.karhu.event.FlyingEvent;
 import me.liwk.karhu.event.SwingEvent;
-import me.liwk.karhu.manager.alert.AlertsManager;
 import me.liwk.karhu.util.MathUtil;
 import org.apache.commons.math3.stat.descriptive.moment.Kurtosis;
 import org.apache.commons.math3.stat.descriptive.moment.Skewness;
@@ -58,7 +57,7 @@ public final class ClickSniffer extends PacketCheck {
 
                 double sdd = Math.abs(std - lastSTD);
 
-                AlertsManager.ADMINS.stream().map(Bukkit::getPlayer).filter(Objects::nonNull).forEach(admin -> {
+                karhu.getAlertsManager().getDebugToggled().stream().map(Bukkit::getPlayer).filter(Objects::nonNull).forEach(admin -> {
                     admin.sendMessage("§c§m-§b§m-§9§7Sniffed §n" + data.getName() + "§c§m-§b§m-§9");
                     admin.sendMessage("§cOutliers/RAT: §f" + outliers + " | " + ratio);
                     admin.sendMessage("§cW/E: §f" + w + " | " + entropy);

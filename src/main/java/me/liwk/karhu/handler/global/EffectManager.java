@@ -22,7 +22,10 @@ public class EffectManager {
     public void addPotionEffect(int id, int amp) {
         int idFromValues = data.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20_2) ? id : id - 1;
         int idForMap = data.getClientVersion().isNewerThanOrEquals(ClientVersion.V_1_20_2) ? id + 1 : id;
-        PotionEffect potionEffect = PotionEffect.values()[idFromValues];
+        PotionEffect[] values = PotionEffect.values();
+        // Effects added in newer Minecraft versions are unknown here, ignore them instead of throwing
+        if (idFromValues < 0 || idFromValues >= values.length) return;
+        PotionEffect potionEffect = values[idFromValues];
 
         effects.put(idForMap, new PotionData(potionEffect, amp));
     }

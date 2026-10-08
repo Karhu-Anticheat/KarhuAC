@@ -34,13 +34,13 @@ public class JsonReader {
         URL url = new URL(sURL);
         URLConnection request = url.openConnection();
         request.setRequestProperty("User-Agent", "KarhuAC");
+        request.setConnectTimeout(3000);
         request.setReadTimeout(4000);
         request.connect();
 
-        JsonParser jp = new JsonParser();
-        JsonElement root = jp.parse(new InputStreamReader((InputStream) request.getContent()));
-
-        return root.getAsJsonObject();
+        try (InputStreamReader reader = new InputStreamReader((InputStream) request.getContent(), StandardCharsets.UTF_8)) {
+            return new JsonParser().parse(reader).getAsJsonObject();
+        }
     }
 
     public static JsonObject sendBan(BanData ban) throws IOException {

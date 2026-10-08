@@ -19,6 +19,7 @@ import me.liwk.karhu.util.mc.axisalignedbb.AxisAlignedBB;
 import me.liwk.karhu.util.player.BlockUtil;
 import me.liwk.karhu.util.set.ConcurrentSet;
 import me.liwk.karhu.world.CachedBlock;
+import me.liwk.karhu.world.chunk.IChunkManager;
 import org.apache.commons.math3.util.FastMath;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -265,15 +266,21 @@ public final class BoundingBox implements Cloneable {
             return blocks;
         }
 
+        final World world = data.getWorld();
+        final IChunkManager chunkManager = Karhu.getInstance().getChunkManager();
+
+        if (world == null) {
+            return blocks;
+        }
+
         for (int x = xFloor; x <= xCeil; x++) {
             for (int z = zFloor; z <= zCeil; z++) {
-                final Location chunkLocation = new Location(data.getWorld(), x, 64, z);
+                // One cache lookup per column instead of one per block
+                final Chunk chunk = chunkManager.getCachedChunk(world, x >> 4, z >> 4);
 
-                if (Karhu.getInstance().getChunkManager().isChunkLoaded(chunkLocation)) {
+                if (chunk != null) {
                     for (int y = yFloor - 1; y <= yCeil; y++) {
-                        chunkLocation.setY(y);
-
-                        Block block = Karhu.getInstance().getChunkManager().getChunkBlockAt(chunkLocation);
+                        Block block = chunkManager.getBlockInChunk(world, chunk, x, y, z);
 
                         if (block != null) {
 
@@ -311,15 +318,21 @@ public final class BoundingBox implements Cloneable {
             return blocks;
         }
 
+        final World world = data.getWorld();
+        final IChunkManager chunkManager = Karhu.getInstance().getChunkManager();
+
+        if (world == null) {
+            return blocks;
+        }
+
         for (int x = xFloor; x <= xCeil; x++) {
             for (int z = zFloor; z <= zCeil; z++) {
-                final Location chunkLocation = new Location(data.getWorld(), x, 64, z);
+                // One cache lookup per column instead of one per block
+                final Chunk chunk = chunkManager.getCachedChunk(world, x >> 4, z >> 4);
 
-                if (Karhu.getInstance().getChunkManager().isChunkLoaded(chunkLocation)) {
+                if (chunk != null) {
                     for (int y = yFloor - 1; y <= yCeil; y++) {
-                        chunkLocation.setY(y);
-
-                        Block block = Karhu.getInstance().getChunkManager().getChunkBlockAt(chunkLocation);
+                        Block block = chunkManager.getBlockInChunk(world, chunk, x, y, z);
 
                         if (block != null) {
                             boolean[] water = isWaterModern(block, y, minY, karhuPlayer);
