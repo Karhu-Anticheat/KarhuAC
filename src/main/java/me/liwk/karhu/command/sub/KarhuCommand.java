@@ -11,7 +11,6 @@ import me.liwk.karhu.check.api.ViolationX;
 import me.liwk.karhu.command.CommandAPI;
 import me.liwk.karhu.data.KarhuPlayer;
 import me.liwk.karhu.manager.ConfigManager;
-import me.liwk.karhu.manager.alert.AlertsManager;
 import me.liwk.karhu.menu.KarhuMenu;
 import me.liwk.karhu.menu.PlayerInfoMenu;
 import me.liwk.karhu.util.APICaller;
@@ -59,7 +58,7 @@ public class KarhuCommand extends CommandAPI {
             ConfigManager cfg = Karhu.getInstance().getConfigManager();
             if (args.length >= 1) {
                 if (args[0].equalsIgnoreCase("alerts") && command.getSender() instanceof Player) {
-                    if (player.hasPermission("karhu.alerts") || AlertsManager.ADMINS.contains(player.getUniqueId())) {
+                    if (player.hasPermission("karhu.alerts")) {
                         Karhu.getInstance().getAlertsManager().toggleAlerts(player);
                         player.sendMessage(
                                 Karhu.getInstance().getAlertsManager().hasAlertsToggled(player.getUniqueId())
@@ -72,11 +71,11 @@ public class KarhuCommand extends CommandAPI {
                                         )));
                     }
                 } else if (args[0].equalsIgnoreCase("mitigations") && command.getSender() instanceof Player) {
-                        if (player.hasPermission("karhu.mitigations") || AlertsManager.ADMINS.contains(player.getUniqueId())) {
+                        if (player.hasPermission("karhu.mitigations")) {
                             Karhu.getInstance().getAlertsManager().toggleMitigation(player);
                             player.sendMessage(Karhu.getInstance().getAlertsManager().hasMitigationToggled(player) ? "§aMitigation alerts on" : "§cMitigation alerts off");
                         }
-                } else if (args[0].equalsIgnoreCase("debug") && (AlertsManager.ADMINS.contains(player.getUniqueId()) || player.getName().equals("LIWK")) && command.getSender() instanceof Player) {
+                } else if (args[0].equalsIgnoreCase("debug") && command.getSender() instanceof Player && player.hasPermission("karhu.debug")) {
                     if (args.length == 1) {
                         Karhu.getInstance().getAlertsManager().toggleDebug(player);
                         player.sendMessage(Karhu.getInstance().getAlertsManager().hasDebugToggled(player) ? ("§4§lDEBUG-mode §aenabled") : ("§4§lDEBUG-mode §cdisabled"));
@@ -104,7 +103,7 @@ public class KarhuCommand extends CommandAPI {
                         player.sendMessage(ChatColor.RED + "You don't have enough permissions.");
                     }
                 } else if (args[0].equalsIgnoreCase("info") && command.getSender() instanceof Player) {
-                    if (player.hasPermission("karhu.info") || AlertsManager.ADMINS.contains(player.getUniqueId())) {
+                    if (player.hasPermission("karhu.info")) {
                         if (args.length > 1) {
                             Player target = Bukkit.getPlayer(args[1]);
 
@@ -119,7 +118,7 @@ public class KarhuCommand extends CommandAPI {
                         }
                     }
                 } else if (args[0].equalsIgnoreCase("status") && command.getSender() instanceof Player) {
-                    if (player.hasPermission("karhu.status") || AlertsManager.ADMINS.contains(player.getUniqueId())) {
+                    if (player.hasPermission("karhu.status")) {
                         if (args.length > 1) {
                             Player target = Bukkit.getPlayer(args[1]);
 
@@ -441,7 +440,7 @@ public class KarhuCommand extends CommandAPI {
                                         msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/karhu teleport " + v.location + " " + v.world));
 
                                         if (!Karhu.getInstance().getConfigManager().getConfig().getBoolean("hoverless-alert")
-                                                && (player.hasPermission("karhu.hover-debug") || AlertsManager.ADMINS.contains(player.getUniqueId()))) {
+                                                && (player.hasPermission("karhu.hover-debug"))) {
                                             if (Karhu.getInstance().getConfigManager().getConfig().getBoolean("spigot-api-alert")) {
                                                 player.spigot().sendMessage(msg);
                                             } else {
@@ -457,7 +456,7 @@ public class KarhuCommand extends CommandAPI {
                                         msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/karhu teleport " + v.location + " " + v.world));
 
                                         if (!Karhu.getInstance().getConfigManager().getConfig().getBoolean("hoverless-alert")
-                                                && (player.hasPermission("karhu.hover-debug") || AlertsManager.ADMINS.contains(player.getUniqueId()))) {
+                                                && (player.hasPermission("karhu.hover-debug"))) {
                                             if (Karhu.getInstance().getConfigManager().getConfig().getBoolean("spigot-api-alert")) {
                                                 player.spigot().sendMessage(msg);
                                             } else {
@@ -573,26 +572,31 @@ public class KarhuCommand extends CommandAPI {
                         });
                     }
                 } else if (args[0].equalsIgnoreCase("teleport")) {
-                    if(sender instanceof Player) {
+                    if(sender instanceof Player && player.hasPermission("karhu.teleport")) {
 
-                        if(args.length > 1) {
+                        if(args.length > 2) {
                             String[] coords = args[1].split(",");
 
                             World world = Bukkit.getWorld(args[2]);
 
                             Location location = null;
 
-                            if(world != null) {
-                                location = new Location(world,
-                                        Double.parseDouble(coords[0]),
-                                        Double.parseDouble(coords[1]),
-                                        Double.parseDouble(coords[2])
-                                );
+                            if(world != null && coords.length == 3) {
+                                try {
+                                    location = new Location(world,
+                                            Double.parseDouble(coords[0]),
+                                            Double.parseDouble(coords[1]),
+                                            Double.parseDouble(coords[2])
+                                    );
+                                } catch (NumberFormatException ignored) {
+                                }
                             }
 
                             if(location != null) {
                                 player.teleport(location);
                                 player.sendMessage("§aTeleporting to " + location.toVector().toString());
+                            } else {
+                                player.sendMessage("§cUse: /karhu teleport <x,y,z> <world>");
                             }
                         }
                     }
@@ -622,7 +626,7 @@ public class KarhuCommand extends CommandAPI {
                                 msg.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(ChatColor.translateAlternateColorCodes('&', v.data.replaceAll("§b", Karhu.getInstance().getConfigManager().getAlertHoverMessageHighlight())) + "\n" + cfg.getLogsHighlight() + v.ping + "§7ms, " + cfg.getLogsHighlight() + v.TPS + "TPS").create()));
                                 msg.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/karhu logs " + username));
 
-                                if (!Karhu.getInstance().getConfigManager().getConfig().getBoolean("hoverless-alert") && (player.hasPermission("karhu.hover-debug") && AlertsManager.ADMINS.contains(player.getUniqueId()))) {
+                                if (!Karhu.getInstance().getConfigManager().getConfig().getBoolean("hoverless-alert") && player.hasPermission("karhu.hover-debug")) {
                                     if (Karhu.getInstance().getConfigManager().getConfig().getBoolean("spigot-api-alert")) {
                                         player.spigot().sendMessage(msg);
                                     } else {
@@ -639,62 +643,62 @@ public class KarhuCommand extends CommandAPI {
                     }
                 } else if (args[0].equalsIgnoreCase("version")) {
                     command.getSender().sendMessage("§7Your build: §b" + Karhu.getInstance().getVersion() + " | " + Karhu.getInstance().getBuild());
-                } else if(args[0].equalsIgnoreCase("banwave")) {
+                } else if(args[0].equalsIgnoreCase("banwave") && (!(sender instanceof Player) || player.hasPermission("karhu.banwave"))) {
 
                     String help = ChatColor.translateAlternateColorCodes('&',
                             Karhu.getInstance().getConfigManager().getConfig().getString("commands.banwave", "Check karhu discord customer announcements"));
 
                     if(args.length > 1) {
                         if (args[1].equalsIgnoreCase("list") || args[1].equalsIgnoreCase("players")) {
-                            player.sendMessage("Banwave list: (" + Karhu.getInstance().getWaveManager().getPlayersToBan().size() + ")");
+                            sender.sendMessage("Banwave list: (" + Karhu.getInstance().getWaveManager().getPlayersToBan().size() + ")");
                             for (String uuid : Karhu.getInstance().getWaveManager().getPlayersToBan()) {
                                 String name = findName(uuid);
-                                player.sendMessage("- " + name);
+                                sender.sendMessage("- " + name);
                             }
                         } else if (args[1].equalsIgnoreCase("run") || args[1].equalsIgnoreCase("start")) {
                             if (!Karhu.getInstance().getWaveManager().isRunningBanwave() && !Karhu.getInstance().getWaveManager().getPlayersToBan().isEmpty()) {
-                                player.sendMessage("Starting banwave.");
+                                sender.sendMessage("Starting banwave.");
                                 Tasker.taskAsync(() -> {
                                     Karhu.getInstance().getWaveManager().startBanwave();
                                 });
                             } else {
                                 if (Karhu.getInstance().getWaveManager().isRunningBanwave()) {
-                                    player.sendMessage("Banwave is already running!");
+                                    sender.sendMessage("Banwave is already running!");
                                 } else {
-                                    player.sendMessage("Banwave has no players in it!");
+                                    sender.sendMessage("Banwave has no players in it!");
                                 }
                             }
                         } else if (args[1].equalsIgnoreCase("add")) {
                             if (Karhu.getInstance().getWaveManager().isRunningBanwave()) {
-                                player.sendMessage("Banwave is already running!");
+                                sender.sendMessage("Banwave is already running!");
                             } else {
-                                if (args[2] != null) {
+                                if (args.length > 2) {
                                     String uuid = Karhu.getInstance().getConfigManager().isCrackedServer()
                                             ? args[2]
                                             : findUUID(args[2]);
                                     boolean added = Karhu.getInstance().getWaveManager().addToWave(uuid, "Manual");
                                     if (added) {
-                                        player.sendMessage("Added " + args[2] + " to banwave");
+                                        sender.sendMessage("Added " + args[2] + " to banwave");
                                     } else {
-                                        player.sendMessage("Player " + args[2] + " is already in the banwave!");
+                                        sender.sendMessage("Player " + args[2] + " is already in the banwave!");
                                     }
                                 }
                             }
                         } else if (args[1].equalsIgnoreCase("remove")) {
-                            if (args[2] != null) {
+                            if (args.length > 2) {
                                 String uuid = Karhu.getInstance().getConfigManager().isCrackedServer()
                                         ? args[2]
                                         : findUUID(args[2]);
                                 Karhu.getInstance().getWaveManager().removeFromWave(uuid);
-                                player.sendMessage("Removed " + args[2] + " from banwave");
+                                sender.sendMessage("Removed " + args[2] + " from banwave");
                             }
                         } else if (args[1].equalsIgnoreCase(help)) {
-                            player.sendMessage(help);
+                            sender.sendMessage(help);
                         } else {
-                            player.sendMessage(help);
+                            sender.sendMessage(help);
                         }
                     } else {
-                        player.sendMessage(help);
+                        sender.sendMessage(help);
                     }
 
 
@@ -708,12 +712,16 @@ public class KarhuCommand extends CommandAPI {
                         sender.sendMessage("§bWorld name: §f" + world.getName() + " §bchunk amount: §f" + Karhu.getInstance().getChunkManager().getCacheSize(world));
                     }
                 } else if (args[0].equalsIgnoreCase("record")) {
-                    Player sender1 = (Player) sender;
-                    if (sender1.getUniqueId().toString().equals("22a4bdba-67c3-4635-8256-0944540124f3")) {
+                    if (sender.hasPermission("karhu.replay") && args.length > 2 && isSafeRecordingName(args[2])) {
 
                         Player target = Bukkit.getPlayer(args[1]);
+                        KarhuPlayer targetData = target == null ? null : Karhu.getInstance().getDataManager().getPlayerData(target);
 
-                        KarhuPlayer targetData = Karhu.getInstance().getDataManager().getPlayerData(target);
+                        if (targetData == null) {
+                            sender.sendMessage("§cSorry, i couldn't find that player");
+                            return;
+                        }
+
                         targetData.setRecording(!targetData.isRecording());
                         targetData.setRecordingName(args[2]);
 
@@ -723,8 +731,7 @@ public class KarhuCommand extends CommandAPI {
 
                 } else if (args[0].equalsIgnoreCase("replay")) {
 
-                    Player sender1 = (Player) sender;
-                    if (sender1.getUniqueId().toString().equals("22a4bdba-67c3-4635-8256-0944540124f3")) {
+                    if (sender.hasPermission("karhu.replay") && args.length > 1 && isSafeRecordingName(args[1])) {
                         String recordingName = args[1];
                         OfflinePlayer replayingPlayer = Bukkit.getOfflinePlayer(UUID.fromString("069a79f4-44e9-4726-a5be-fca90e38aaf5"));
                         KarhuPlayer playerData = Karhu.getInstance().getDataManager().add(new User(null, null, ClientVersion.V_1_21_7, new UserProfile(replayingPlayer.getUniqueId(), "Notch")), System.nanoTime());
@@ -773,6 +780,10 @@ public class KarhuCommand extends CommandAPI {
             }
         }
 
+    }
+
+    private static boolean isSafeRecordingName(String name) {
+        return name.matches("[A-Za-z0-9_-]{1,64}");
     }
 
     private String findUUID(String arg) {

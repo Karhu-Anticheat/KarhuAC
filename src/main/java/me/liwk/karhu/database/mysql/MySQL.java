@@ -13,7 +13,7 @@ public class MySQL {
     public static void init() {
         try {
             if (conn == null || conn.isClosed()) {
-                Class.forName("com.mysql.jdbc.Driver");
+                loadDriver();
                 FileConfiguration config = Karhu.getInstance().getConfigManager().getConfig();
                 conn = DriverManager.getConnection("jdbc:mysql://" + config.getString("mysql.address") + ":" + config.getString("mysql.port") + "/?useSSL=false",
                         config.getString("mysql.user"),
@@ -23,11 +23,20 @@ public class MySQL {
                 Query.use(conn);
                 Query.prepare("CREATE DATABASE IF NOT EXISTS `" + config.getString("mysql.database") + "`").execute();
                 Query.prepare("USE `" + config.getString("mysql.database") + "`").execute();
-                Karhu.getInstance().printCool("&b> &aConnection to SQLite has been established.");
+                Karhu.getInstance().printCool("&b> &aConnection to MySQL has been established.");
             }
         } catch (Exception e) {
-            Karhu.getInstance().printCool("&b> &cConnection to SQLite has failed.");
+            Karhu.getInstance().printCool("&b> &cConnection to MySQL has failed.");
             e.printStackTrace();
+        }
+    }
+
+    private static void loadDriver() throws ClassNotFoundException {
+        try {
+            // Connector/J 8+, bundled with recent Spigot/Paper builds
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+            Class.forName("com.mysql.jdbc.Driver");
         }
     }
 

@@ -671,8 +671,6 @@ public final class ConfigManager {
 
         this.exemptTicksJoin = this.config.getInt("join-exempt-ticks");
 
-        String acname = license.equals("8C1A3-CD7E3-09F8B-DAC6C-CD4AA") ? "VengeanceLoader" : "KarhuLoader";
-
         save();
     }
 

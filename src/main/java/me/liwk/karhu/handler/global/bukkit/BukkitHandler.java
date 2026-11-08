@@ -27,22 +27,6 @@ import java.util.UUID;
 
 public final class BukkitHandler implements Listener {
 
-    @EventHandler(priority = EventPriority.LOWEST)
-    public void onJoin(PlayerJoinEvent event) {
-        long now = System.nanoTime();
-        Player player = event.getPlayer();
-
-
-        /*Bukkit.getScheduler().runTaskLater(Karhu.getInstance(), () -> {
-
-            if (AlertsManager.ADMINS.contains(player.getUniqueId())) {
-                player.sendMessage("§7§m--------------------------------\n" +
-                        "§fThis server is using §b§lKarhu (" + Karhu.getInstance().getBuild() +")\n" +
-                        "\n§7§m--------------------------------");
-            }
-        }, 3 * 20L);*/
-    }
-
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoinMonitor(PlayerJoinEvent event) {
         Player player = event.getPlayer();
@@ -253,21 +237,21 @@ public final class BukkitHandler implements Listener {
 
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPreJoin(PlayerLoginEvent e) {
-        Player player = e.getPlayer();
+    // AsyncPlayerPreLoginEvent runs off the main thread and waits for its listeners,
+    // so the blocking lookup can be done inline and disallow() is still taken into account.
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPreJoin(AsyncPlayerPreLoginEvent e) {
+        if (e.getLoginResult() != AsyncPlayerPreLoginEvent.Result.ALLOWED) return;
 
         if(!Karhu.getInstance().getConfigManager().isAntivpn()
             || (!Karhu.getInstance().getConfigManager().isProxycheck() && !Karhu.getInstance().getConfigManager().isMaliciouscheck())
-            || Karhu.getInstance().getConfigManager().getAntiVpnBypass().contains(player.getUniqueId().toString())) {
+            || Karhu.getInstance().getConfigManager().getAntiVpnBypass().contains(e.getUniqueId().toString())) {
             return;
         }
 
-        Karhu.getInstance().getAntiVPNThread().execute(() -> {
-            if (VPNCheck.checkAddress(e.getAddress())) {
-                e.disallow(PlayerLoginEvent.Result.KICK_BANNED, Karhu.getInstance().getConfigManager().getAntivpnKickMsg());
-            }
-        });
+        if (VPNCheck.checkAddress(e.getAddress())) {
+            e.disallow(AsyncPlayerPreLoginEvent.Result.KICK_BANNED, Karhu.getInstance().getConfigManager().getAntivpnKickMsg());
+        }
     }
 
     @EventHandler

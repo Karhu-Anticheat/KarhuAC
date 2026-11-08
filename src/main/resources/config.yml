@@ -144,7 +144,7 @@ packetevents:
   ejectAsync: true
   injectEarly: true
   kickUninjected: true
-  uninjected-kick-message: '&cWe've failed to load your data, please reconnect!'
+  uninjected-kick-message: '&cWe''ve failed to load your data, please reconnect!'
 
 discord:
   enabled: true
@@ -211,7 +211,7 @@ mongo:
 
 server-lag-protection:
   max-tick-length: 120
-  warning-message: '%prefix% &c%player% &fwould've flagged, but server lagged within &c1 second&f.'
+  warning-message: '%prefix% &c%player% &fwould''ve flagged, but server lagged within &c1 second&f.'
   warning-display-type: CONSOLE
 
 async-kb-fix: false

@@ -45,7 +45,8 @@ public enum PotionEffect {
     WIND_CHARGED("wind_charged", 36),
     WEAVING("weaving", 37),
     OOZING("oozing", 38),
-    INFESTED("infested", 39);
+    INFESTED("infested", 39),
+    BREATH_OF_THE_NAUTILUS("breath_of_the_nautilus", 40);
 
     private final String name;
     // Could use ordinal() but getId() is more explicit

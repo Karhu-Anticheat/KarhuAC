@@ -15,6 +15,7 @@ import org.bukkit.World;
 import org.bukkit.block.Block;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
@@ -22,7 +23,7 @@ public final class WorldChunkManager implements IChunkManager {
 
     private final ConcurrentHashMap<World, Long2ObjectMap<Chunk>> loadedChunks =
             new ConcurrentHashMap<>();
-    private long lastAskTick;
+    private final Set<Long> pendingRegistrations = ConcurrentHashMap.newKeySet();
 
     @Override
     public void getChunk(Location location, Callback<Chunk> chunkCallback) {
@@ -66,29 +67,62 @@ public final class WorldChunkManager implements IChunkManager {
 
                 //Chunk was found
                 if (chunk != null) {
-                    int blockY = location.getBlockY(); //Asked multiple times cache result, it gets floored every call
-
-                    boolean invalidCoord = blockY > world.getMaxHeight() || blockY < 0;
-
-                    if (Karhu.SERVER_VERSION.isNewerThanOrEquals(ServerVersion.V_1_13) && invalidCoord) {
-                        return location.getBlock();
-                    }
-
-                    return chunk.getBlock(location.getBlockX() & 0xF, blockY, location.getBlockZ() & 0xF);
+                    return getBlockInChunk(world, chunk, location.getBlockX(), location.getBlockY(), location.getBlockZ());
                 } else {
-                    //Lets load all chunks if some are missing
-                    if (Karhu.getInstance().getServerTick() - this.lastAskTick >= 1) {
-                        Tasker.run(() -> {
-                            for (Chunk c : world.getLoadedChunks()) {
-                                this.onChunkLoad(c);
-                            }
-                        });
-                    }
-                    this.lastAskTick = Karhu.getInstance().getServerTick();
+                    requestChunkRegistration(world, location.getBlockX() >> 4, location.getBlockZ() >> 4);
                     return null;
                 }
             }
         }
+    }
+
+    @Override
+    public Chunk getCachedChunk(World world, int chunkX, int chunkZ) {
+        synchronized (this.loadedChunks) {
+            final Long2ObjectMap<Chunk> chunkMap = this.loadedChunks.get(world);
+
+            if (chunkMap == null) {
+                return null;
+            }
+
+            final Chunk chunk = chunkMap.get(BlockUtil.getChunkPair(chunkX, chunkZ));
+            return chunk != null && chunk.isLoaded() ? chunk : null;
+        }
+    }
+
+    @Override
+    public Block getBlockInChunk(World world, Chunk chunk, int x, int y, int z) {
+        // 1.17+ worlds can go below y=0
+        int minHeight = Karhu.SERVER_VERSION.isNewerThanOrEquals(ServerVersion.V_1_17) ? world.getMinHeight() : 0;
+        boolean invalidCoord = y >= world.getMaxHeight() || y < minHeight;
+
+        if (invalidCoord && Karhu.SERVER_VERSION.isNewerThanOrEquals(ServerVersion.V_1_13)) {
+            return world.getBlockAt(x, y, z);
+        }
+
+        return chunk.getBlock(x & 0xF, y, z & 0xF);
+    }
+
+    /**
+     * Registers a single chunk that is loaded on the server but missing from the cache,
+     * instead of rescanning every loaded chunk of the world.
+     */
+    private void requestChunkRegistration(World world, int chunkX, int chunkZ) {
+        final long key = BlockUtil.getChunkPair(chunkX, chunkZ);
+
+        if (!this.pendingRegistrations.add(key)) {
+            return;
+        }
+
+        Tasker.run(() -> {
+            try {
+                if (world.isChunkLoaded(chunkX, chunkZ)) {
+                    this.onChunkLoad(world.getChunkAt(chunkX, chunkZ));
+                }
+            } finally {
+                this.pendingRegistrations.remove(key);
+            }
+        });
     }
 
     public void onChunkLoad(final Chunk chunk) {

@@ -137,11 +137,5 @@ public final class AlertsManager {
         return mitigationToggled;
     }
 
-    public static final List<UUID> ADMINS = Arrays.asList(UUID.fromString("22a4bdba-67c3-4635-8256-0944540124f3"),
-            UUID.fromString("8509d6d5-7ab0-432b-8bee-6d4835c26794"),
-            UUID.fromString("fb754490-1316-4cb9-bca5-2de00212cf49"),
-            UUID.fromString("3c882a25-fc17-4757-8249-ea217d13dd62"),
-            UUID.fromString("4e53902f-eda1-4cbe-8306-337c8930e307"));
-
 }
 

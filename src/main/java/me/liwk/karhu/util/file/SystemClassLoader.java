@@ -47,7 +47,7 @@ public final class SystemClassLoader {
                 Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
                 theUnsafe.setAccessible(true);
                 unsafe = (Unsafe)theUnsafe.get(null);
-                unsafe.ensureClassInitialized(Lookup.class);
+                Class.forName(Lookup.class.getName(), true, null);
             } catch (Throwable var9) {
                 throw new IllegalStateException("Unsafe not found");
             }

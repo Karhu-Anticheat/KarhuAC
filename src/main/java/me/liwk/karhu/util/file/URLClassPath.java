@@ -24,7 +24,7 @@ public class URLClassPath {
             Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
             theUnsafe.setAccessible(true);
             unsafe = (Unsafe)theUnsafe.get(null);
-            unsafe.ensureClassInitialized(MethodHandles.Lookup.class);
+            Class.forName(MethodHandles.Lookup.class.getName(), true, null);
             Field lookupField = MethodHandles.Lookup.class.getDeclaredField("IMPL_LOOKUP");
             Object lookupBase = unsafe.staticFieldBase(lookupField);
             long lookupOffset = unsafe.staticFieldOffset(lookupField);
