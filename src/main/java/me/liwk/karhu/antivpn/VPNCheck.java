@@ -45,6 +45,14 @@ public class VPNCheck {
     }
 
     private static Boolean checkVPN(String address) throws Exception {
+        if ("vpndetection".equalsIgnoreCase(Karhu.getInstance().getConfigManager().getAntivpnProvider())) {
+            Boolean anonymous = VPNDetection.isAnonymous(address);
+            if (anonymous == null) {
+                return null;
+            }
+            return anonymous && Karhu.getInstance().getConfigManager().isProxycheck();
+        }
+
         String[] dataFromIP = JsonReader.getData(address);
 
         if(dataFromIP[0] == null || dataFromIP[2] == null) {

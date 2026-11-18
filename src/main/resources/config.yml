@@ -99,6 +99,7 @@ unallowed-brands: #This is case sensitive
 
 anti-vpn:
   enabled: true
+  provider: 'proxycheck' #Providers, (proxycheck, vpndetection). vpndetection needs no key; malicious-check needs proxycheck
   proxy-check: true
   malicious-check: true
   bypass:

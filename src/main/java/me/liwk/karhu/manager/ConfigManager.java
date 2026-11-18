@@ -73,7 +73,7 @@ public final class ConfigManager {
     private String transactionOrder, cancelTransactions, cancelKeepalives, ownTransactions, ownKeepalives;
 
     
-    private String cancelOwnKick, orderKick, logsHighlight, logsBan, antivpnKickMsg;
+    private String cancelOwnKick, orderKick, logsHighlight, logsBan, antivpnKickMsg, antivpnProvider;
 
     
     private boolean logSync, vehicleHandler, antivpn, proxycheck, maliciouscheck, clientCheck;
@@ -437,6 +437,10 @@ public final class ConfigManager {
             this.config.set("anti-vpn.enabled", true);
         }
 
+        if (!this.config.isSet("anti-vpn.provider")) {
+            this.config.set("anti-vpn.provider", "proxycheck");
+        }
+
         if (!this.config.isSet("anti-vpn.proxy-check")) {
             this.config.set("anti-vpn.proxy-check", true);
         }
@@ -641,6 +645,7 @@ public final class ConfigManager {
         this.pingKickMsg = ChatColor.translateAlternateColorCodes('&', this.config.getString("high-ping-kick.kick-message"));
 
         this.antivpn = this.config.getBoolean("anti-vpn.enabled");
+        this.antivpnProvider = this.config.getString("anti-vpn.provider", "proxycheck");
         this.proxycheck = this.config.getBoolean("anti-vpn.proxy-check");
         this.maliciouscheck = this.config.getBoolean("anti-vpn.malicious-check");
         this.antivpnKickMsg = ChatColor.translateAlternateColorCodes('&', this.config.getString("anti-vpn.kick-message"));
